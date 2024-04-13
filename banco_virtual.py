@@ -5,8 +5,8 @@ import re
 
 preguntar_usuario_nuevo = input("¿Desea crear una nueva cuenta? (si/no): ").lower().strip()
 
-ruta_database = "C:/Users/juani/OneDrive/Escritorio/Banco en Linea/database/data.csv"
-ruta_database_block = "C:/Users/juani/OneDrive/Escritorio/Banco en Linea/database/data_block.csv"
+ruta_database = "database/data.csv"
+ruta_database_block = "database/data_block.csv"
 
 # APARTADO DE FUNCIONES
 
@@ -77,7 +77,6 @@ def bloquear_usuario(index):
     
 # FUNCION QUE EJECUTA UN SISTEMA POR OPCIONES PARA HACER OPERACIONES CORRESPONDIENTES
 def operaciones_banco(index):
-    # en esta parte sacaremos un menu donde se tenga que seleccionar entre 4 opciones y si se inserta otro numero se pregunta de nuevo
     print("｡☆✼★━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━★✼☆｡")
     print("                                MENU PRINCIPAL")
     print("｡☆✼★━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━★✼☆｡")
@@ -85,7 +84,8 @@ def operaciones_banco(index):
     print("2: RETIRAR")
     print("3: VER SALDO")
     print("4: TRANSFERIR SALDO")
-    print("5: SALIR")
+    print("5: RETIRAR FONDOS EN OTRA MONEDA")
+    print("6: SALIR")
     opcion_usuario = int(input("POR FAVOR SELECCIONE LA OPERACION QUE QUIERE HACER: "))
     if opcion_usuario == 1:
         depositar_dinero(index)
@@ -95,6 +95,8 @@ def operaciones_banco(index):
         ver_saldo(index)
     elif opcion_usuario == 4:
         tranferir_dinero(index)
+    elif opcion_usuario == 5:
+        retirar_dinero_internacional(index)
     else:
         salir_sistema()
 def crear_password(usuario_nuevo):
@@ -189,6 +191,437 @@ def tranferir_dinero(index):
         print("NO ENCONTRAMOS NINGUNA CUENTA QUE CORRESPONDA AL NOMBRE DE USUARIO QUE INSERTO INTENTE DE NUEVO")
         index = tranferir_dinero(index)
     return index
+
+# PARA CAMBIO DE MONEDAS
+
+def retirar_dinero_internacional(index):
+    # el usuario debe elegir la moneda donde comienza la conversion
+    df = pd.read_csv(ruta_database, encoding="utf-8")
+    saldo_actual = df.loc[index, "saldo"] # [argumento]
+    print("｡☆✼★━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━★✼☆｡")
+    print("                    BIENVENIDO AL SISTEMA DE CONVERSION DE MONEDA")
+    print("｡☆✼★━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━★✼☆｡")
+    print(f"USTED TIENE UN SALDO DE: {saldo_actual} DOLARES (USD)")
+    print("1. PESO CHILENO (CLP)")
+    print("2. PESO ARGENTINO (ARS)")
+    print("3. EURO (EUR)")
+    print("4. LIRA TURC (TRY)")
+    print("5. LIRA ESTERLINA (GBP)")
+    print("6. REGRESAR AL MENU PRINCIPAL")
+    opcion_usuario = int(input("¿DESDE QUE MONEDA USTED DESEA VER SUS FONDOS PARA LA CONVERSION?: "))
+    if opcion_usuario == 1:
+        retirar_clp(index)
+    elif opcion_usuario == 2:
+        retirar_ars(index)
+    elif opcion_usuario == 3:
+        retirar_eur(index)
+    elif opcion_usuario == 4:
+        retirar_try(index)
+    elif opcion_usuario == 5:
+        retirar_gbp(index)
+    else:
+        print("REGRESANDO AL MENU PRINCIPAL...")
+        operaciones_banco(index)
+
+def retirar_clp(index):
+    df = pd.read_csv(ruta_database, encoding="utf-8")
+    saldo_actual = df.loc[index, "saldo"] # [argumento]
+    saldo_convertido = round(saldo_actual * 966.745, 2)
+    minimo_cambio = 9615.38 # PESOS CHILENOS MINIMO
+    print(f"USTED HA SELECCIONADO PESO CHILENO EN TOTAL USTED TIENE: {saldo_convertido} CLP")
+    print("CONVERTIR PESOS CHILENOS A: ")
+    print("1. PESO ARGENTINO (ARS)")
+    print("2. EURO (EUR)")
+    print("3. LIRA TURCA (TRY)")
+    print("4. LIBRA ESTERLINA (GBP)")
+    print("5. SALIR AL MENU PRINCIPAL")
+    opcion_convertir = int(input("¿A QUE TIPO DE MONEDA USTED DESEA CONVERTIR?: "))
+    if opcion_convertir == 1:
+        print(f"USTED SELECCIONO PESO CHILENO EN TOTAL USTED TIENE: {saldo_convertido} CLP")
+        opcion_escogida = "CLP"
+        moneda = "ARS"
+        print("LA TASA DE CAMBIO ES: 1 PESO CHILENO = 0.90 PESOS ARGENTINOS")
+        print(f"EL MINIMO DE CLP REQUERIDO ES DE AL MENOS: {minimo_cambio}")
+        cantidad_convertir = int(input("¿QUE CANTIDAD DE CLP USTED DESEA CONVERTIR A ARS?: ")) # cantidad del usuario en pesos chilenos
+        # se convertira a pesos argentinos lo cual hace que solo debamos convertir todo a pesos argentinos
+        comprobacion = round(cantidad_convertir * 0.0010, 2) # pesos chilenos convertidos a dolares
+        # por ultimo debemos saber si el cambio a pesos argentinos totales es de al menos 10 dolares
+        tasa_cambio = 0.90 # PESOS CHILENOS A PESO ARGENTINO
+        if saldo_actual >= comprobacion and cantidad_convertir >= minimo_cambio: # comprobamos que nuestro saldo actual si alcance y si es de minimo 10 dolares
+            realizar_cambio(cantidad_convertir, comprobacion, index, tasa_cambio, opcion_escogida, moneda, saldo_convertido)
+        else:
+            print("ERROR VALOR DEMASIADO BAJO PARA REALIZAR OPERACION DE CAMBIO O SALDO INSUFICIENTE VUELVA A INTENTARLO DE NUEVO")
+            retirar_clp(index)
+    elif opcion_convertir == 2:
+        print(f"USTED SELECCIONO PESO CHILENO EN TOTAL USTED TIENE: {saldo_convertido} CLP")
+        opcion_escogida = "CLP"
+        moneda = "EUR"
+        print("LA TASA DE CAMBIO ES: 1 PESO CHILENO = 0.00097 EUROS")
+        print(f"EL MINIMO DE CLP REQUERIDO ES DE AL MENOS: {minimo_cambio}")
+        cantidad_convertir = int(input("¿QUE CANTIDAD DE CLP USTED DESEA CONVERTIR A EUR?: ")) # cantidad del usuario en pesos chilenos
+        # se convertira a pesos argentinos lo cual hace que solo debamos convertir todo a pesos argentinos
+        comprobacion = round(cantidad_convertir * 0.0010, 2) # pesos chilenos convertidos a dolares
+        # por ultimo debemos saber si el cambio a EUROS totales es de al menos 10 DOLARES
+        tasa_cambio = 0.00097 # PESOS CHILENOS A EUROS
+        if saldo_actual >= comprobacion and cantidad_convertir >= minimo_cambio: # comprobamos que nuestro saldo actual si alcance y si es de minimo 10 dolares
+            realizar_cambio(cantidad_convertir, comprobacion, index, tasa_cambio, opcion_escogida, moneda, saldo_convertido)
+        else:
+            print("ERROR VALOR DEMASIADO BAJO PARA REALIZAR OPERACION DE CAMBIO O SALDO INSUFICIENTE VUELVA A INTENTARLO DE NUEVO")
+            retirar_clp(index)
+    elif opcion_convertir == 3:
+        print(f"USTED SELECCIONO PESO CHILENO EN TOTAL USTED TIENE: {saldo_convertido} CLP")
+        opcion_escogida = "CLP"
+        moneda = "TRY"
+        print("LA TASA DE CAMBIO ES: 1 PESO CHILENO = 0.034 LIRAS TURCAS")
+        print(f"EL MINIMO DE CLP REQUERIDO ES DE AL MENOS: {minimo_cambio}")
+        cantidad_convertir = int(input("¿QUE CANTIDAD DE CLP USTED DESEA CONVERTIR A TRY?: ")) # cantidad del usuario en pesos chilenos
+        # se convertira a LIRAS TURCAS lo cual hace que solo debamos convertir todo a LIRAS TURCAS
+        comprobacion = round(cantidad_convertir * 0.0010, 2) # pesos chilenos convertidos a dolares
+        # por ultimo debemos saber si el cambio a LIRAS TURCAS totales es de al menos 10 DOLARES
+        tasa_cambio = 0.034 # PESOS CHILENOS A LIRAS TURCAS
+        if saldo_actual >= comprobacion and cantidad_convertir >= minimo_cambio: # comprobamos que nuestro saldo actual si alcance y si es de minimo 10 dolares
+            realizar_cambio(cantidad_convertir, comprobacion, index, tasa_cambio, opcion_escogida, moneda, saldo_convertido)
+        else:
+            print("ERROR VALOR DEMASIADO BAJO PARA REALIZAR OPERACION DE CAMBIO O SALDO INSUFICIENTE VUELVA A INTENTARLO DE NUEVO")
+            retirar_clp(index)
+    elif opcion_convertir == 4:
+        print(f"USTED SELECCIONO PESO CHILENO EN TOTAL USTED TIENE: {saldo_convertido} CLP")
+        opcion_escogida = "CLP"
+        moneda = "GBP"
+        print("LA TASA DE CAMBIO ES: 1 PESO CHILENO = 0.00083 LIRAS ESTERLINAS")
+        print(f"EL MINIMO DE CLP REQUERIDO ES DE AL MENOS: {minimo_cambio}")
+        cantidad_convertir = int(input("¿QUE CANTIDAD DE CLP USTED DESEA CONVERTIR A GBP?: ")) # cantidad del usuario en pesos chilenos
+        # se convertira a LIBRAS ESTERLINAS lo cual hace que solo debamos convertir todo a LIBRAS ESTERLINAS
+        comprobacion = round(cantidad_convertir * 0.0010, 2) # pesos chilenos convertidos a dolares
+        # por ultimo debemos saber si el cambio a LIBRAS ESTERLINAS totales es de al menos 10 DOLARES
+        tasa_cambio = 0.00083 # PESOS CHILENOS A LIBRAS ESTERLINAS
+        if saldo_actual >= comprobacion and cantidad_convertir >= minimo_cambio: # comprobamos que nuestro saldo actual si alcance y si es de minimo 10 dolares
+            realizar_cambio(cantidad_convertir, comprobacion, index, tasa_cambio, opcion_escogida, moneda, saldo_convertido)
+        else:
+            print("ERROR VALOR DEMASIADO BAJO PARA REALIZAR OPERACION DE CAMBIO O SALDO INSUFICIENTE VUELVA A INTENTARLO DE NUEVO")
+            retirar_clp(index)
+    else:
+        print("SALIENDO AL MENU PRINCIPAL...")
+        operaciones_banco(index)
+
+def retirar_ars(index):
+    df = pd.read_csv(ruta_database, encoding="utf-8")
+    saldo_actual = df.loc[index, "saldo"] # [argumento]
+    saldo_convertido = round(saldo_actual * 863.67, 2) # saldo obtenido en pesos argentinos
+    minimo_cambio = 8636.71 # PESOS ARGENTINOS MINIMOS
+    print(f"USTED HA SELECCIONADO PESO ARGENTINO EN TOTAL USTED TIENE: {saldo_convertido} ARS")
+    print("CONVERTIR PESOS ARGENTINOS A: ")
+    print("1. PESO CHILENO (CLP)")
+    print("2. EURO (EUR)")
+    print("3. LIRA TURCA (TRY)")
+    print("4. LIBRA ESTERLINA (GBP)")
+    print("5. SALIR AL MENU PRINCIPAL")
+    opcion_convertir = int(input("¿A QUE TIPO DE MONEDA USTED DESEA CONVERTIR?: "))
+    if opcion_convertir == 1:
+        print(f"USTED SELECCIONO PESO ARGENTINO EN TOTAL USTED TIENE: {saldo_convertido} ARS")
+        opcion_escogida = "ARS"
+        moneda = "CLP"
+        print("LA TASA DE CAMBIO ES: 1 PESO ARGENTINO = 1.12 PESOS CHILENOS")
+        print(f"EL MINIMO DE ARS REQUERIDO ES DE AL MENOS: {minimo_cambio}")
+        cantidad_convertir = int(input("¿QUE CANTIDAD DE ARS USTED DESEA CONVERTIR A CLP?: ")) # cantidad del usuario en pesos argentinos
+        comprobacion = round(cantidad_convertir * 0.0012, 2) # pesos argentinos convertidos a dolares
+        # por ultimo debemos saber si el cambio a pesos argentinos totales es de al menos 10 dolares
+        tasa_cambio = 1.10 # PESOS ARGENTINOS A PESOS CHILENOS
+        if saldo_actual >= comprobacion and cantidad_convertir >= minimo_cambio: # comprobamos que nuestro saldo actual si alcance y si es de minimo 10 dolares
+            realizar_cambio(cantidad_convertir, comprobacion, index, tasa_cambio, opcion_escogida, moneda, saldo_convertido)
+        else:
+            print("ERROR VALOR DEMASIADO BAJO PARA REALIZAR OPERACION DE CAMBIO O SALDO INSUFICIENTE VUELVA A INTENTARLO DE NUEVO")
+            retirar_ars(index)
+    elif opcion_convertir == 2:
+        print(f"USTED SELECCIONO PESO ARGENTINO EN TOTAL USTED TIENE: {saldo_convertido} ARS")
+        opcion_escogida = "ARS"
+        moneda = "EUR"
+        print("LA TASA DE CAMBIO ES: 1 PESO ARGENTINO = 0.0011 EUROS")
+        print(f"EL MINIMO DE ARS REQUERIDO ES DE AL MENOS: {minimo_cambio}")
+        cantidad_convertir = int(input("¿QUE CANTIDAD DE ARS USTED DESEA CONVERTIR A EURO?: "))
+        comprobacion = round(cantidad_convertir * 0.0012, 2) # pesos argentinos convertidos a dolares
+        tasa_cambio = 0.0011 # PESOS ARGENTINOS A EUROS
+        if saldo_actual >= comprobacion and cantidad_convertir >= minimo_cambio: # comprobamos que nuestro saldo actual si alcance y si es de minimo 10 dolares
+            realizar_cambio(cantidad_convertir, comprobacion, index, tasa_cambio, opcion_escogida, moneda, saldo_convertido)
+        else:
+            print("ERROR VALOR DEMASIADO BAJO PARA REALIZAR OPERACION DE CAMBIO O SALDO INSUFICIENTE VUELVA A INTENTARLO DE NUEVO")
+            retirar_ars(index)
+    elif opcion_convertir == 3:
+        print(f"USTED SELECCIONO PESO ARGENTINO EN TOTAL USTED TIENE: {saldo_convertido} ARS")
+        opcion_escogida = "ARS"
+        moneda = "TRY"
+        print("LA TASA DE CAMBIO ES: 1 PESO ARGENTINO = 0.037 LIRAS TURCAS")
+        print(f"EL MINIMO DE ARS REQUERIDO ES DE AL MENOS: {minimo_cambio}")
+        cantidad_convertir = int(input("¿QUE CANTIDAD DE ARS USTED DESEA CONVERTIR A LIRAS TURCAS?: "))
+        comprobacion = round(cantidad_convertir * 0.0012, 2) # pesos argentinos convertidos a dolares
+        tasa_cambio = 0.037 # PESOS ARGENTINOS A LIRAS TURCAS
+        if saldo_actual >= comprobacion and cantidad_convertir >= minimo_cambio: # comprobamos que nuestro saldo actual si alcance y si es de minimo 10 dolares
+            realizar_cambio(cantidad_convertir, comprobacion, index, tasa_cambio, opcion_escogida, moneda, saldo_convertido)
+        else:
+            print("ERROR VALOR DEMASIADO BAJO PARA REALIZAR OPERACION DE CAMBIO O SALDO INSUFICIENTE VUELVA A INTENTARLO DE NUEVO")
+            retirar_ars(index)
+    elif opcion_convertir == 4:
+        print(f"USTED SELECCIONO PESO ARGENTINO EN TOTAL USTED TIENE: {saldo_convertido} ARS")
+        opcion_escogida = "ARS"
+        moneda = "GBP"
+        print("LA TASA DE CAMBIO ES: 1 PESO ARGENTINO = 0.037 LIBRAS ESTERLINAS")
+        print(f"EL MINIMO DE ARS REQUERIDO ES DE AL MENOS: {minimo_cambio}")
+        cantidad_convertir = int(input("¿QUE CANTIDAD DE ARS USTED DESEA CONVERTIR A LIBRAS ESTERLINAS?: "))
+        comprobacion = round(cantidad_convertir * 0.0012, 2) # pesos argentinos convertidos a dolares
+        tasa_cambio = 0.00093
+        if saldo_actual >= comprobacion and cantidad_convertir >= minimo_cambio: # comprobamos que nuestro saldo actual si alcance y si es de minimo 10 dolares
+            realizar_cambio(cantidad_convertir, comprobacion, index, tasa_cambio, opcion_escogida, moneda, saldo_convertido)
+        else:
+            print("ERROR VALOR DEMASIADO BAJO PARA REALIZAR OPERACION DE CAMBIO O SALDO INSUFICIENTE VUELVA A INTENTARLO DE NUEVO")
+            retirar_ars(index)        
+    else:
+        print("SALIENDO AL MENU PRINCIPAL...")
+        operaciones_banco(index)
+        
+def retirar_eur(index):
+    df = pd.read_csv(ruta_database, encoding="utf-8")
+    saldo_actual = df.loc[index, "saldo"] # [argumento]
+    saldo_convertido = round(saldo_actual * 0.94, 2) # saldo obtenido en euros
+    minimo_cambio = 9.37 # minimo EUROS
+    print(f"USTED HA SELECCIONADO EURO EN TOTAL USTED TIENE: {saldo_convertido} EUR")
+    print("CONVERTIR EUROS A: ")
+    print("1. PESO CHILENO (CLP)")
+    print("2. PESO ARGENTINO (ARS)")
+    print("3. LIRA TURCA (TRY)")
+    print("4. LIBRA ESTERLINA (GBP)")
+    print("5. SALIR AL MENU PRINCIPAL")
+    opcion_convertir = int(input("¿A QUE TIPO DE MONEDA USTED DESEA CONVERTIR?: "))
+    if opcion_convertir == 1:
+        print(f"USTED SELECCIONO EUROS EN TOTAL USTED TIENE: {saldo_convertido} EUR")
+        opcion_escogida = "EUR"
+        moneda = "CLP"
+        print("LA TASA DE CAMBIO ES: 1 EURO = 1018.09 PESOS CHILENOS")
+        print(f"EL MINIMO DE EUR REQUERIDO ES DE AL MENOS: {minimo_cambio}")
+        cantidad_convertir = int(input("¿QUE CANTIDAD DE EUR USTED DESEA CONVERTIR A CLP?: ")) # cantidad del usuario en EUROS
+        comprobacion = round(cantidad_convertir * 1.07, 2) # EUROS convertidos a dolares
+        tasa_cambio = 1018.09 # EUROS A PESOS CHILENOS
+        if saldo_actual >= comprobacion and cantidad_convertir >= minimo_cambio: # comprobamos que nuestro saldo actual si alcance y si es de minimo 10 dolares
+            realizar_cambio(cantidad_convertir, comprobacion, index, tasa_cambio, opcion_escogida, moneda, saldo_convertido)
+        else:
+            print("ERROR VALOR DEMASIADO BAJO PARA REALIZAR OPERACION DE CAMBIO O SALDO INSUFICIENTE VUELVA A INTENTARLO DE NUEVO")
+            retirar_eur(index)
+    elif opcion_convertir == 2:
+        print(f"USTED SELECCIONO EUROS EN TOTAL USTED TIENE: {saldo_convertido} EUR")
+        opcion_escogida = "EUR"
+        moneda = "ARS"
+        print("LA TASA DE CAMBIO ES: 1 EUR = 921.67 PESOS ARGENTINOS")
+        print(f"EL MINIMO DE EUR REQUERIDO ES DE AL MENOS: {minimo_cambio}")
+        cantidad_convertir = int(input("¿QUE CANTIDAD DE EUR USTED DESEA CONVERTIR A ARS?: "))
+        comprobacion = round(cantidad_convertir * 1.07, 2) # EUROS convertidos a dolares
+        tasa_cambio = 921.67 # para convertir de EURO A PESO ARGENTINO
+        if saldo_actual >= comprobacion and cantidad_convertir >= minimo_cambio: # comprobamos que nuestro saldo actual si alcance y si es de minimo 10 dolares
+            realizar_cambio(cantidad_convertir, comprobacion, index, tasa_cambio, opcion_escogida, moneda, saldo_convertido)
+        else:
+            print("ERROR VALOR DEMASIADO BAJO PARA REALIZAR OPERACION DE CAMBIO O SALDO INSUFICIENTE VUELVA A INTENTARLO DE NUEVO")
+            retirar_eur(index)
+    elif opcion_convertir == 3:
+        print(f"USTED SELECCIONO EUROS EN TOTAL USTED TIENE: {saldo_convertido} EUR")
+        opcion_escogida = "EUR"
+        moneda = "TRY"
+        print("LA TASA DE CAMBIO ES: 1 EURO = 34.54 LIRAS TURCAS")
+        print(f"EL MINIMO DE EUR REQUERIDO ES DE AL MENOS: {minimo_cambio}")
+        cantidad_convertir = int(input("¿QUE CANTIDAD DE EUR USTED DESEA CONVERTIR A LIRAS TURCAS?: "))
+        comprobacion = round(cantidad_convertir * 1.07, 2) # EUROS convertidos a dolares
+        tasa_cambio = 34.54 # EUROS A LIRAS TURCAS
+        if saldo_actual >= comprobacion and cantidad_convertir >= minimo_cambio: # comprobamos que nuestro saldo actual si alcance y si es de minimo 10 dolares
+            realizar_cambio(cantidad_convertir, comprobacion, index, tasa_cambio, opcion_escogida, moneda, saldo_convertido)
+        else:
+            print("ERROR VALOR DEMASIADO BAJO PARA REALIZAR OPERACION DE CAMBIO O SALDO INSUFICIENTE VUELVA A INTENTARLO DE NUEVO")
+            retirar_eur(index)
+    elif opcion_convertir == 4:
+        print(f"USTED SELECCIONO EUROS EN TOTAL USTED TIENE: {saldo_convertido} EUR")
+        opcion_escogida = "EUR"
+        moneda = "GBP"
+        print("LA TASA DE CAMBIO ES: 1 EURO = 0.037 LIBRAS ESTERLINAS")
+        print(f"EL MINIMO DE EUR REQUERIDO ES DE AL MENOS: {minimo_cambio}")
+        cantidad_convertir = int(input("¿QUE CANTIDAD DE EUR USTED DESEA CONVERTIR A LIBRAS ESTERLINAS?: "))
+        comprobacion = round(cantidad_convertir * 1.07, 2) # EUROS convertidos a dolares
+        tasa_cambio = 0.86 # EUROS A LIBRAS ESTERLINAS
+        if saldo_actual >= comprobacion and cantidad_convertir >= minimo_cambio: # comprobamos que nuestro saldo actual si alcance y si es de minimo 10 dolares
+            realizar_cambio(cantidad_convertir, comprobacion, index, tasa_cambio, opcion_escogida, moneda, saldo_convertido)
+        else:
+            print("ERROR VALOR DEMASIADO BAJO PARA REALIZAR OPERACION DE CAMBIO O SALDO INSUFICIENTE VUELVA A INTENTARLO DE NUEVO")
+            retirar_eur(index)        
+    else:
+        print("SALIENDO AL MENU PRINCIPAL...")
+        operaciones_banco(index)
+
+def retirar_try(index):
+    df = pd.read_csv(ruta_database, encoding="utf-8")
+    saldo_actual = df.loc[index, "saldo"] # [argumento]
+    saldo_convertido = round(saldo_actual * 0.94, 2) # saldo obtenido en liras turcas
+    minimo_cambio = 323.63 # minimo liras turcas
+    print(f"USTED HA SELECCIONADO LIRA TURCA EN TOTAL USTED TIENE: {saldo_convertido} TRY")
+    print("CONVERTIR LIRAS TURCAS A: ")
+    print("1. PESO CHILENO (CLP)")
+    print("2. PESO ARGENTINO (ARS)")
+    print("3. EURO (EUR)")
+    print("4. LIBRA ESTERLINA (GBP)")
+    print("5. SALIR AL MENU PRINCIPAL")
+    opcion_convertir = int(input("¿A QUE TIPO DE MONEDA USTED DESEA CONVERTIR?: "))
+    if opcion_convertir == 1:
+        print(f"USTED SELECCIONO LIRAS TURCAS EN TOTAL USTED TIENE: {saldo_convertido} TRY")
+        opcion_escogida = "TRY"
+        moneda = "CLP"
+        print("LA TASA DE CAMBIO ES: 1 LIRA TURCA = 29.48 PESOS CHILENOS")
+        print(f"EL MINIMO DE TRY REQUERIDO ES DE AL MENOS: {minimo_cambio}")
+        cantidad_convertir = int(input("¿QUE CANTIDAD DE TRY USTED DESEA CONVERTIR A CLP?: ")) # cantidad del usuario en liras turcas
+        comprobacion = round(cantidad_convertir * 0.031, 2) # liras turcas convertidos a dolares
+        tasa_cambio = 29.48 # LIRAS TURCAS A PESOS CHILENOS
+        if saldo_actual >= comprobacion and cantidad_convertir >= minimo_cambio: # comprobamos que nuestro saldo actual si alcance y si es de minimo 10 dolares
+            realizar_cambio(cantidad_convertir, comprobacion, index, tasa_cambio, opcion_escogida, moneda, saldo_convertido)
+        else:
+            print("ERROR VALOR DEMASIADO BAJO PARA REALIZAR OPERACION DE CAMBIO O SALDO INSUFICIENTE VUELVA A INTENTARLO DE NUEVO")
+            retirar_try(index)
+    elif opcion_convertir == 2:
+        print(f"USTED SELECCIONO EUROS EN TOTAL USTED TIENE: {saldo_convertido} EUR")
+        opcion_escogida = "TRY"
+        moneda = "ARS"
+        print("LA TASA DE CAMBIO ES: 1 TRY = 26.69 PESOS ARGENTINOS")
+        print(f"EL MINIMO DE TRY REQUERIDO ES DE AL MENOS: {minimo_cambio}")
+        cantidad_convertir = int(input("¿QUE CANTIDAD DE TRY USTED DESEA CONVERTIR A PESOS ARGENTINOS?: "))
+        comprobacion = round(cantidad_convertir * 0.031, 2) # liras turcas convertidos a dolares
+        tasa_cambio = 26.69 # para convertir de lira turca a peso argentino
+        if saldo_actual >= comprobacion and cantidad_convertir >= minimo_cambio: # comprobamos que nuestro saldo actual si alcance y si es de minimo 10 dolares
+            realizar_cambio(cantidad_convertir, comprobacion, index, tasa_cambio, opcion_escogida, moneda, saldo_convertido)
+        else:
+            print("ERROR VALOR DEMASIADO BAJO PARA REALIZAR OPERACION DE CAMBIO O SALDO INSUFICIENTE VUELVA A INTENTARLO DE NUEVO")
+            retirar_try(index)
+    elif opcion_convertir == 3:
+        print(f"USTED SELECCIONO LIRAS TURCAS EN TOTAL USTED TIENE: {saldo_convertido} TRY")
+        opcion_escogida = "TRY"
+        moneda = "EUR"
+        print("LA TASA DE CAMBIO ES: 1 LIRA TURCA = 0.029 EUROS")
+        print(f"EL MINIMO DE TRY REQUERIDO ES DE AL MENOS: {minimo_cambio}")
+        cantidad_convertir = int(input("¿QUE CANTIDAD DE TRY USTED DESEA CONVERTIR A EUROS?: "))
+        comprobacion = round(cantidad_convertir * 0.031, 2) # liras turcas convertidos a dolares
+        tasa_cambio = 0.029 # LIRAS TURCAS A EUROS
+        if saldo_actual >= comprobacion and cantidad_convertir >= minimo_cambio: # comprobamos que nuestro saldo actual si alcance y si es de minimo 10 dolares
+            realizar_cambio(cantidad_convertir, comprobacion, index, tasa_cambio, opcion_escogida, moneda, saldo_convertido)
+        else:
+            print("ERROR VALOR DEMASIADO BAJO PARA REALIZAR OPERACION DE CAMBIO O SALDO INSUFICIENTE VUELVA A INTENTARLO DE NUEVO")
+            retirar_try(index)
+    elif opcion_convertir == 4:
+        print(f"USTED SELECCIONO LIRAS TURCAS EN TOTAL USTED TIENE: {saldo_convertido} TRY")
+        opcion_escogida = "TRY"
+        moneda = "GBP"
+        print("LA TASA DE CAMBIO ES: 1 LIRA TURCA = 0.025 LIBRAS ESTERLINAS")
+        print(f"EL MINIMO DE TRY REQUERIDO ES DE AL MENOS: {minimo_cambio}")
+        cantidad_convertir = int(input("¿QUE CANTIDAD DE TRY USTED DESEA CONVERTIR A GBP?: "))
+        comprobacion = round(cantidad_convertir * 0.031, 2) # liras turcas convertidos a dolares
+        tasa_cambio = 0.025 # LIRAS TURCAS A LIBRAS ESTERLINAS
+        if saldo_actual >= comprobacion and cantidad_convertir >= minimo_cambio: # comprobamos que nuestro saldo actual si alcance y si es de minimo 10 dolares
+            realizar_cambio(cantidad_convertir, comprobacion, index, tasa_cambio, opcion_escogida, moneda, saldo_convertido)
+        else:
+            print("ERROR VALOR DEMASIADO BAJO PARA REALIZAR OPERACION DE CAMBIO O SALDO INSUFICIENTE VUELVA A INTENTARLO DE NUEVO")
+            retirar_try(index)        
+    else:
+        print("SALIENDO AL MENU PRINCIPAL...")
+        operaciones_banco(index)
+
+def retirar_gbp(index):
+    df = pd.read_csv(ruta_database, encoding="utf-8")
+    saldo_actual = df.loc[index, "saldo"] # [argumento]
+    saldo_convertido = round(saldo_actual * 0.80, 2) # saldo obtenido en libras esterlinas
+    minimo_cambio = 8.03 # minimo liras turcas
+    print(f"USTED HA SELECCIONADO LIBRA ESTERLINA EN TOTAL USTED TIENE: {saldo_convertido} GBP")
+    print("CONVERTIR LIBRAS ESTERLINAS A: ")
+    print("1. PESO CHILENO (CLP)")
+    print("2. PESO ARGENTINO (ARS)")
+    print("3. EURO (EUR)")
+    print("4. LIRA TURCA (TRY)")
+    print("5. SALIR AL MENU PRINCIPAL")
+    opcion_convertir = int(input("¿A QUE TIPO DE MONEDA USTED DESEA CONVERTIR?: "))
+    if opcion_convertir == 1:
+        print(f"USTED SELECCIONO LIBRA ESTERLINA EN TOTAL USTED TIENE: {saldo_convertido} GBP")
+        opcion_escogida = "GBP"
+        moneda = "CLP"
+        print("LA TASA DE CAMBIO ES: 1 LIBRA ESTERLINA = 1188.44 PESOS CHILENOS")
+        print(f"EL MINIMO DE GBP REQUERIDO ES DE AL MENOS: {minimo_cambio}")
+        cantidad_convertir = int(input("¿QUE CANTIDAD DE GBP USTED DESEA CONVERTIR A CLP?: ")) # cantidad del usuario en liras turcas
+        comprobacion = round(cantidad_convertir * 1.25, 2) # LIBRAS ESTERLINAS A DOLARES
+        tasa_cambio = 1188.44 # LIBRAS ESTERLINAS A PESOS CHILENOS
+        if saldo_actual >= comprobacion and cantidad_convertir >= minimo_cambio: # comprobamos que nuestro saldo actual si alcance y si es de minimo 10 dolares
+            realizar_cambio(cantidad_convertir, comprobacion, index, tasa_cambio, opcion_escogida, moneda, saldo_convertido)
+        else:
+            print("ERROR VALOR DEMASIADO BAJO PARA REALIZAR OPERACION DE CAMBIO O SALDO INSUFICIENTE VUELVA A INTENTARLO DE NUEVO")
+            retirar_gbp(index)
+    elif opcion_convertir == 2:
+        print(f"USTED HA SELECCIONADO LIBRAS ESTERLINAS EN TOTAL USTED TIENE: {saldo_convertido} GBP")
+        opcion_escogida = "GBP"
+        moneda = "ARS"
+        print("LA TASA DE CAMBIO ES: 1 GBP = 1075.87 PESOS ARGENTINOS")
+        print(f"EL MINIMO DE GBP REQUERIDO ES DE AL MENOS: {minimo_cambio}")
+        cantidad_convertir = int(input("¿QUE CANTIDAD DE GBP USTED DESEA CONVERTIR A PESOS ARGENTINOS?: "))
+        comprobacion = round(cantidad_convertir * 1.25, 2) # libras esterlinas a DOLARES
+        tasa_cambio = 1075.87 # para convertir de lira turca a peso argentino
+        if saldo_actual >= comprobacion and cantidad_convertir >= minimo_cambio: # comprobamos que nuestro saldo actual si alcance y si es de minimo 10 dolares
+            realizar_cambio(cantidad_convertir, comprobacion, index, tasa_cambio, opcion_escogida, moneda, saldo_convertido)
+        else:
+            print("ERROR VALOR DEMASIADO BAJO PARA REALIZAR OPERACION DE CAMBIO O SALDO INSUFICIENTE VUELVA A INTENTARLO DE NUEVO")
+            retirar_gbp(index)
+    elif opcion_convertir == 3:
+        print(f"USTED HA SELECCIONADO LIBRAS ESTERLINAS EN TOTAL USTED TIENE: {saldo_convertido} GBP")
+        opcion_escogida = "GBP"
+        moneda = "EUR"
+        print("LA TASA DE CAMBIO ES: 1 LIBRA ESTERLINA = 1.17 EUROS")
+        print(f"EL MINIMO DE GBP REQUERIDO ES DE AL MENOS: {minimo_cambio}")
+        cantidad_convertir = int(input("¿QUE CANTIDAD DE GBP USTED DESEA CONVERTIR A EUROS?: "))
+        comprobacion = round(cantidad_convertir * 1.25, 2) # libras esterlinas convertidos a dolares
+        tasa_cambio = 1.17 # LIRAS TURCAS A EUROS
+        if saldo_actual >= comprobacion and cantidad_convertir >= minimo_cambio: # comprobamos que nuestro saldo actual si alcance y si es de minimo 10 dolares
+            realizar_cambio(cantidad_convertir, comprobacion, index, tasa_cambio, opcion_escogida, moneda, saldo_convertido)
+        else:
+            print("ERROR VALOR DEMASIADO BAJO PARA REALIZAR OPERACION DE CAMBIO O SALDO INSUFICIENTE VUELVA A INTENTARLO DE NUEVO")
+            retirar_gbp(index)
+    elif opcion_convertir == 4:
+        print(f"USTED HA SELECCIONADO LIBRAS ESTERLINAS EN TOTAL USTED TIENE: {saldo_convertido} GBP")
+        opcion_escogida = "GBP"
+        moneda = "TRY"
+        print("LA TASA DE CAMBIO ES: 1 LIBRA ESTERLINA = 40.31 LIRAS TURCAS")
+        print(f"EL MINIMO DE GBP REQUERIDO ES DE AL MENOS: {minimo_cambio}")
+        cantidad_convertir = int(input("¿QUE CANTIDAD DE GBP USTED DESEA CONVERTIR A TRY?: "))
+        comprobacion = round(cantidad_convertir * 1.25, 2) # liras turcas convertidos a dolares
+        tasa_cambio = 40.31 # LIBRAS ESTERLINAS A LIRAS TURCAS
+        if saldo_actual >= comprobacion and cantidad_convertir >= minimo_cambio: # comprobamos que nuestro saldo actual si alcance y si es de minimo 10 dolares
+            realizar_cambio(cantidad_convertir, comprobacion, index, tasa_cambio, opcion_escogida, moneda, saldo_convertido)
+        else:
+            print("ERROR VALOR DEMASIADO BAJO PARA REALIZAR OPERACION DE CAMBIO O SALDO INSUFICIENTE VUELVA A INTENTARLO DE NUEVO")
+            retirar_gbp(index)        
+    else:
+        print("SALIENDO AL MENU PRINCIPAL...")
+        operaciones_banco(index)
+
+def realizar_cambio(convertir, cantidadUSD, index, tasa, opcion, moneda, total_dinero):
+    df = pd.read_csv(ruta_database, encoding="utf-8")
+    saldo_actual = df.loc[index, "saldo"]
+    comision = saldo_actual * 0.01
+    cantidad_dinero = round(convertir * tasa, 2)
+    descuento_total = comision + cantidadUSD
+    saldo_restante = saldo_actual - descuento_total
+    print(f"SU SALDO ACTUAL ES DE: {total_dinero} {opcion} / {saldo_actual} USD")
+    print(f"SU SALDO DESPUES DE LA OPERACION SERIA: {round(total_dinero - cantidadUSD, 2)} {opcion} / {round(saldo_restante, 2)} USD")
+    preguntar = input(f"¿DESEA HACER LA OPERACION DE CAMBIO DE {convertir} {opcion} POR {cantidad_dinero} {moneda}? (si/no): ").lower()
+    if preguntar == "si":
+        df.loc[index, "saldo"] = round(saldo_restante, 2)
+        df.to_csv(ruta_database, encoding='utf-8', index=False)
+        print(f"LA OPERACION FUE REALIZADA CON EXITO, PUEDE RETIRAR EN SU BANCO O CAJERO AUTOMATICO MAS CERCANO LA CANTIDAD DE: {cantidad_dinero} {moneda}")
+        # como solo debemos restar la cantidad de pesos chilenos insertados ya que esto es una simulacion, la cantidad de pesos argentinos seria retirado en ucajero    normalmente pero este no es un sistema de esos solo es un simulador ajaja
+        # PREGUNTAR SI QUIERE HACER OTRA OPERACION EN ESE CASO VOLVER AL MENU DE CAMBIO
+        repetir = input("¿DESEA REALIZAR OTRA OPERACION DE CAMBIO? (si/no): ").strip().lower()
+        if repetir == "si":
+            retirar_dinero_internacional(index)
+        else:
+            print("TERMINANDO OPERACIONES Y CERRANDO SISTEMA...")
+    else:
+        print("CANCELANDO OPERACION Y VOLVIENDO AL MENU PRINCIPAL")
+        operaciones_banco(index)
+
 def salir_sistema():
     print("¡MUCHAS GRACIAS POR USAR ESTE PROGRAMA!")
 if preguntar_usuario_nuevo == "si":
